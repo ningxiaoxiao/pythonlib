@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 #!/usr/bin/python3
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
 import csv
 import json
 import urllib
@@ -63,7 +62,7 @@ def getcards(jdata):
     for c in jdata['data']['cardID']:
         cj = findcard(c)
         #print(cj)
-        print(c)
+        #print(c)
         downloadCardImg(cj['牌组小图'], cj['url'])
         if c in retc:
             retc[c] = [
@@ -113,32 +112,68 @@ def tocards(code):
     postdata = parse.urlencode(data).encode('utf-8')
     jtext = urllib.request.urlopen("https://exp.16163.com/sv/to_cards",
                                    postdata)
-    j = json.load(jtext)
+    html=jtext.read().decode('utf-8')
+    j = json.loads(html)
     return j
 
 
 #得到json
 cardsjson = tocards(
-    'AADEzjgLLyqmHQD_e-be9FiMFu8TMG7od98U1Vwfp4MJAuj-cGml2cH_gPl0w4Fm9loP')
+    'AADE8WnyIjY9zKOMX1uFVv5qVJnLBmSn9DUtDYI1myjLGvQ')
 
-print(cardsjson['clan'])
-print(cardsjson['deck_format'])
+print(cardsjson['data']['clan'])#职业
+#1精灵  2皇家 3巫师 4龙 5死 6吸 7主 8超
+
+print(cardsjson['data']['deck_format'])#1 是无限   2是指定
 
 #转成数组
 getcards(cardsjson)
 #按cost排序
 cards = sorted(cards, key=lambda x: x[0])
 
-#todo 画出职业 和指定/无限
-#todo 画出费用图
+# 画出职业 
+#todo 指定/无限
+classimg=Image.open('class/'+str(cardsjson['data']['clan'])+'.jpg')
+classimg=classimg.resize((256*2, 60*2), Image.ANTIALIAS)
+#写出名字
+playname_draw=ImageDraw.Draw(classimg)
+namefont = ImageFont.truetype(word_css, 35)
 
+playname_draw.text((10,10),"这一定是十个中文字符",font=namefont)
+
+x1,y1=classimg.size
+#todo 画出费用图
+#费用图
+costmap=[0,0,0,0,0,0,0,0,0]
+for c in cards:
+    ct=int(c[0])
+    if ct==0:#0费计到1费中
+        costmap[0]+=1
+        continue
+    if ct > 9:#9和9费以上 者放到9中
+        costmap[8]+=1
+        continue
+    costmap[ct-1]+=1
+
+playname_draw.text((10,50),str(costmap),font=namefont)
+    
+outimg.paste(classimg,(0,0,x1,y1))
 #画出卡
+
 cardcount = 0
+
+x_start=0
+y_start=y1
+
 for c in cards:
     #得到卡的图
     im = drawCard(c[0], c[1], c[2], c[3])
     x, y = im.size
     #画到图上
-    outimg.paste(im, (0, cardcount * 48, x, cardcount * 48 + y))
+    outimg.paste(im, (x_start, cardcount * 48+y_start, x+x_start, cardcount * 48 + y+y_start))
     cardcount += 1
-outimg.show()
+    if cardcount==8:#8个卡要换行一下
+        x_start =256
+        cardcount=0
+
+outimg.save('out.jpg')
