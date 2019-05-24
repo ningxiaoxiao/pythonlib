@@ -10,15 +10,16 @@ import os, shutil
 from urllib.request import urlretrieve
 if os.path.exists("pic") == False:
     os.mkdir("pic")
+if os.path.exists("DECK") == False:
+    os.mkdir("DECK")
 from PIL import Image, ImageDraw, ImageFont
 
-word_css = "DFHeiW7.ttf"
-font = ImageFont.truetype(word_css, 20)
-costfont = ImageFont.truetype(word_css, 30)
+word_css = "MSYH.TTC"
 
-outimg = Image.open('bg.jpg')
-draw = ImageDraw.Draw(outimg)
-cards = []
+
+
+
+
 allcards = json.load(open('cards.json', encoding='utf-8'))
 
 
@@ -31,54 +32,31 @@ def downloadCardImg(url, filename):
     urlretrieve('http:' + url, fileurl)
     return fileurl
 
-
-def downloaddeck(code):
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    driver = webdriver.Chrome(chrome_options=chrome_options)
-    driver.get('http://wiki-sv.netease.com/picker?specify=false&code=' + code)
-    pickedlist = driver.find_elements_by_class_name('m-picked-card')
-
-    for card in pickedlist:
-        name = card.find_element_by_class_name('name').text.replace('‧', ' ')
-        cost = card.find_element_by_class_name('cost').text
-        count = card.find_element_by_class_name('quantity').text.replace(
-            '×', '')
-        cardid = card.find_element_by_class_name('remove').get_attribute(
-            'data-card-id')
-
-        picurl = card.get_attribute('style')
-        picurl = picurl.replace('");', '').replace('background-image: url("',
-                                                   'http:')
-
-        pic = downloadCardImg(picurl, cardid)
-        cards.append([cost, name, count, cardid])
-
-    driver.quit()
-
-
-def getcards(jdata):
-    retc = {}
+#把网站返回的数据转成数组
+def toCardArray(jdata):
+    ret=[]
+    tmp = {}
     for c in jdata['data']['cardID']:
         cj = findcard(c)
         #print(cj)
         #print(c)
         downloadCardImg(cj['牌组小图'], cj['url'])
-        if c in retc:
-            retc[c] = [
+        if c in tmp:
+            tmp[c] = [
                 str(cj['cost']), cj['name'],
-                int(retc[c][2]) + 1,
+                int(tmp[c][2]) + 1,
                 str(c)
             ]
         else:
-            retc[c] = [str(cj['cost']), cj['name'], 1, str(c)]
+            tmp[c] = [str(cj['cost']), cj['name'], 1, str(c)]
 
-    for c in retc:
-        cards.append(retc[c])
+    for c in tmp:
+        ret.append(tmp[c])
+    #按cost排序
+    ret = sorted(ret, key=lambda x: x[0])
+    return ret
 
-    print(cards)
-
-
+#从全卡组中找到卡,返回详细数据
 def findcard(cardid):
     for c in allcards:
         if int(c['url']) == int(cardid):
@@ -92,20 +70,21 @@ def drawCard(cost, name, count, id):
     cardimg = cardimg.resize((256, 48), Image.ANTIALIAS)
 
     cardDraw = ImageDraw.Draw(cardimg)
-    #cost
+    #画出cost
     costbg = Image.open('costbg.png')
-
     costdraw = ImageDraw.Draw(costbg)
-    costdraw.text((7, 0), str(cost), font=costfont)
+    costfont = ImageFont.truetype(word_css, 20)
+    darwTextOutline(costdraw,(7, 0), str(cost), font=costfont)
+    #把cost放到卡上
     cardimg.paste(costbg, (9, 9, 39, 39))
 
-    cardDraw.text((39, 12), name, font=font)
-    cardDraw.text((220, 9), 'x' + str(count), font=costfont)
-    #cardimg.show()
+    darwTextOutline(cardDraw,(45,10),name,ImageFont.truetype(word_css, 18),2)
+    darwTextOutline(cardDraw,(230, 9),'x' + str(count),costfont,2)
+
     return cardimg
 
-
-def tocards(code):
+#从网站得数据
+def getCards(code):
     data = {
         "deck_code": code,
     }
@@ -114,66 +93,93 @@ def tocards(code):
                                    postdata)
     html=jtext.read().decode('utf-8')
     j = json.loads(html)
-    return j
+    return j#todo 不成功的问题
+#描边
+def darwTextOutline(draw,postion,text,font,size=1,color='black'):
+    x,y=postion
+    draw.text((x-size,y),text,font = font,fill = color)
+    draw.text((x + size,y),text,font = font,fill = color)
+    draw.text((x,y-size),text,font = font,fill = color)
+    draw.text((x,y + size),text,font = font,fill = color)
+
+    draw.text((x-1, y-1), text, font=font, fill=color)
+    draw.text((x+1, y-1), text, font=font, fill=color)
+    draw.text((x-1, y+1), text, font=font, fill=color)
+    draw.text((x+1, y+1), text, font=font, fill=color)
+
+    draw.text(postion,text,font = font)
 
 
-#得到json
-cardsjson = tocards(
-    'AADE8WnyIjY9zKOMX1uFVv5qVJnLBmSn9DUtDYI1myjLGvQ')
+def getdeckpic(playername,code):
+    if os.path.exists("DECK/"+playername) == False:
+        os.mkdir("DECK/"+playername)
 
-print(cardsjson['data']['clan'])#职业
-#1精灵  2皇家 3巫师 4龙 5死 6吸 7主 8超
-
-print(cardsjson['data']['deck_format'])#1 是无限   2是指定
-
-#转成数组
-getcards(cardsjson)
-#按cost排序
-cards = sorted(cards, key=lambda x: x[0])
-
-# 画出职业 
-#todo 指定/无限
-classimg=Image.open('class/'+str(cardsjson['data']['clan'])+'.jpg')
-classimg=classimg.resize((256*2, 60*2), Image.ANTIALIAS)
-#写出名字
-playname_draw=ImageDraw.Draw(classimg)
-namefont = ImageFont.truetype(word_css, 35)
-
-playname_draw.text((10,10),"这一定是十个中文字符",font=namefont)
-
-x1,y1=classimg.size
-#todo 画出费用图
-#费用图
-costmap=[0,0,0,0,0,0,0,0,0]
-for c in cards:
-    ct=int(c[0])
-    if ct==0:#0费计到1费中
-        costmap[0]+=1
-        continue
-    if ct > 9:#9和9费以上 者放到9中
-        costmap[8]+=1
-        continue
-    costmap[ct-1]+=1
-
-playname_draw.text((10,50),str(costmap),font=namefont)
+    outimg = Image.open('bg.jpg')
+    draw = ImageDraw.Draw(outimg)
+    #得到json
+    cardsjson = getCards(code) 
+    #转成数组
+    cards= toCardArray(cardsjson)
     
-outimg.paste(classimg,(0,0,x1,y1))
-#画出卡
+    clan=str(cardsjson['data']['clan'])
 
-cardcount = 0
+    # 画出职业 
+    #todo 指定/无限
+    classimg=Image.open('class/'+clan+'.jpg')
+    classimg=classimg.resize((256*2, 60*2), Image.ANTIALIAS)
+    #写出名字
+    playname_draw=ImageDraw.Draw(classimg)
+    namefont = ImageFont.truetype(word_css, 35)
 
-x_start=0
-y_start=y1
+    darwTextOutline(playname_draw,(10,10),playername,namefont,2)
 
-for c in cards:
-    #得到卡的图
-    im = drawCard(c[0], c[1], c[2], c[3])
-    x, y = im.size
-    #画到图上
-    outimg.paste(im, (x_start, cardcount * 48+y_start, x+x_start, cardcount * 48 + y+y_start))
-    cardcount += 1
-    if cardcount==8:#8个卡要换行一下
-        x_start =256
-        cardcount=0
+    # playname_draw.text((10,10),playername,font=namefont)
 
-outimg.save('out.jpg')
+    x1,y1=classimg.size
+    #todo 画出费用图
+    #费用图
+    costmap=[0,0,0,0,0,0,0,0,0]
+    for c in cards:
+        ct=int(c[0])
+        if ct==0:#0费计到1费中
+            costmap[0]+=1
+            continue
+        if ct > 9:#9和9费以上 者放到9中
+            costmap[8]+=1
+            continue
+        costmap[ct-1]+=1
+    
+    darwTextOutline(playname_draw,(10,55),'费用:'+str([1,2,3,4,5,6,7,8,9])+'\n数量:'+str(costmap),font=ImageFont.truetype(word_css, 20))
+
+        
+    outimg.paste(classimg,(0,0,x1,y1))
+    #画出卡
+
+    cardcount = 0
+
+    x_start=0
+    y_start=y1
+
+    for c in cards:
+        #得到卡的图
+        im = drawCard(c[0], c[1], c[2], c[3])
+        x, y = im.size
+        #画到图上
+        outimg.paste(im, (x_start, cardcount * 48+y_start, x+x_start, cardcount * 48 + y+y_start))
+        cardcount += 1
+        if cardcount==8:#8个卡要换行一下
+            x_start =256
+            cardcount=0
+    outimg.save('DECK/'+playername+'/'+playername+'_'+clan+'.jpg')
+
+def main():
+    with open("2.csv", "r") as cfile:
+        read = csv.reader(cfile)
+        next(read)  #跳过第一行
+        for i in read:
+            name = i[0]
+            print(i)
+            getdeckpic( name,i[3],)
+            getdeckpic( name,i[5],)
+
+main()
