@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 #!/usr/bin/python3
 
-import csv
+import csv,time
 import json
 import urllib
 from urllib import request
@@ -110,10 +110,11 @@ def darwTextOutline(draw,postion,text,font,size=1,color='black'):
     draw.text(postion,text,font = font)
 
 
-def getdeckpic(playername,code):
+def getdeckpic(playername,code,mono):
     if os.path.exists("DECK/"+playername) == False:
         os.mkdir("DECK/"+playername)
-
+    print(code)
+    time.sleep(2)#不能太快
     outimg = Image.open('bg.jpg')
     draw = ImageDraw.Draw(outimg)
     #得到json
@@ -131,7 +132,7 @@ def getdeckpic(playername,code):
     playname_draw=ImageDraw.Draw(classimg)
     namefont = ImageFont.truetype(word_css, 35)
 
-    darwTextOutline(playname_draw,(10,10),playername,namefont,2)
+    darwTextOutline(playname_draw,(10,10),playername+mono,namefont,2)
 
     # playname_draw.text((10,10),playername,font=namefont)
 
@@ -170,16 +171,31 @@ def getdeckpic(playername,code):
         if cardcount==8:#8个卡要换行一下
             x_start =256
             cardcount=0
-    outimg.save('DECK/'+playername+'/'+playername+'_'+clan+'.jpg')
+    outimg.save('DECK/'+playername+'/'+playername+mono+'_'+clan+'.jpg')
 
-def main():
+def main(jumptoindex):
     with open("2.csv", "r") as cfile:
         read = csv.reader(cfile)
         next(read)  #跳过第一行
+        count=0
         for i in read:
+            count+=1
+            if count<jumptoindex:
+                print("要跳到",jumptoindex,"现在是",count)
+                continue
             name = i[0]
-            print(i)
-            getdeckpic( name,i[3],)
-            getdeckpic( name,i[5],)
+            print(name)
+            
+            getdeckpic( name,i[3],"_day1_w")
+            getdeckpic( name,i[5],"_day1_w")
+            getdeckpic( name,i[7],"_day1_z")
+            getdeckpic( name,i[9],"_day1_z")
 
-main()
+            getdeckpic( name,i[11],"_day2")
+            getdeckpic( name,i[13],"_day2")
+            getdeckpic( name,i[15],"_day2")
+            
+
+
+
+main(0)
