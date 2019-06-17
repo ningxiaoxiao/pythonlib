@@ -53,7 +53,7 @@ def toCardArray(jdata):
     for c in tmp:
         ret.append(tmp[c])
     #按cost排序
-    ret = sorted(ret, key=lambda x: x[0])
+    ret = sorted(ret, key=lambda x: int(x[0]))
     return ret
 
 #从全卡组中找到卡,返回详细数据
@@ -141,14 +141,15 @@ def getdeckpic(playername,code,mono):
     #费用图
     costmap=[0,0,0,0,0,0,0,0,0]
     for c in cards:
-        ct=int(c[0])
-        if ct==0:#0费计到1费中
-            costmap[0]+=1
+        cost=int(c[0])
+        count=int(c[2])
+        if cost==0:#0费计到1费中
+            costmap[0]+=count
             continue
-        if ct > 9:#9和9费以上 者放到9中
-            costmap[8]+=1
+        if cost > 9:#9和9费以上 者放到9中
+            costmap[8]+=count
             continue
-        costmap[ct-1]+=1
+        costmap[cost-1]+=count
     
     darwTextOutline(playname_draw,(10,55),'费用:'+str([1,2,3,4,5,6,7,8,9])+'\n数量:'+str(costmap),font=ImageFont.truetype(word_css, 20))
 
@@ -186,10 +187,10 @@ def main(jumptoindex):
             name = i[0]
             print(name)
             
-            getdeckpic( name,i[3],"_day1_w")
-            getdeckpic( name,i[5],"_day1_w")
-            getdeckpic( name,i[7],"_day1_z")
-            getdeckpic( name,i[9],"_day1_z")
+            # getdeckpic( name,i[3],"_day1_w")
+            # getdeckpic( name,i[5],"_day1_w")
+            # getdeckpic( name,i[7],"_day1_z")
+            # getdeckpic( name,i[9],"_day1_z")
 
             getdeckpic( name,i[11],"_day2")
             getdeckpic( name,i[13],"_day2")
