@@ -134,7 +134,6 @@ def getdeckpic(playername,code,mono):
 
     darwTextOutline(playname_draw,(10,10),playername+mono,namefont,2)
 
-    # playname_draw.text((10,10),playername,font=namefont)
 
     x1,y1=classimg.size
     #todo 画出费用图
@@ -169,7 +168,7 @@ def getdeckpic(playername,code,mono):
         #画到图上
         outimg.paste(im, (x_start, cardcount * 48+y_start, x+x_start, cardcount * 48 + y+y_start))
         cardcount += 1
-        if cardcount==8:#8个卡要换行一下
+        if cardcount>len(cards)/2:#8个卡要换行一下
             x_start =256
             cardcount=0
     outimg.save('DECK/'+playername+'/'+playername+mono+'_'+clan+'.jpg')
@@ -192,11 +191,15 @@ def main(jumptoindex):
             # getdeckpic( name,i[7],"_day1_z")
             # getdeckpic( name,i[9],"_day1_z")
 
-            getdeckpic( name,i[11],"_day2")
-            getdeckpic( name,i[13],"_day2")
-            getdeckpic( name,i[15],"_day2")
-            
+            # getdeckpic( name,i[11],"_day2")
+            # getdeckpic( name,i[13],"_day2")
+            # getdeckpic( name,i[15],"_day2")
+
+            getdeckpic( name,i[3],"_指定")
+            getdeckpic( name,i[5],"_指定")
+
 
 
 
 main(0)
+# getdeckpic('sss',"AADEjNwjvVbupTQ1GOk69d-YU8Ea5WDVfJnXALyH0YMr5JULkY2G5eJdrtoy2RZ3-FeJ","")
