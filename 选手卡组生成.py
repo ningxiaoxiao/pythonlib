@@ -26,6 +26,8 @@ allcards = json.load(open('cards.json', encoding='utf-8'))
 #下载图片 有就跳过,没有就下载
 def downloadCardImg(url, filename):
     #print(url)
+    url=url.strip()
+    url=url.strip('\t')
     fileurl = "pic/" + str(filename) + '.jpg'
     if os.path.exists(fileurl):  #如果存在就不下载
         return fileurl
@@ -40,7 +42,12 @@ def toCardArray(jdata):
         cj = findcard(c)
         #print(cj)
         #print(c)
-        downloadCardImg(cj['牌组小图'], cj['url'])
+        try:
+            downloadCardImg(cj['牌组小图'], cj['url'])
+        except :
+            print('err url:'+cj['牌组小图'])
+       
+
         if c in tmp:
             tmp[c] = [
                 str(cj['cost']), cj['name'],
@@ -168,7 +175,7 @@ def getdeckpic(playername,code,mono):
         #画到图上
         outimg.paste(im, (x_start, cardcount * 48+y_start, x+x_start, cardcount * 48 + y+y_start))
         cardcount += 1
-        if cardcount>len(cards)/2:#8个卡要换行一下
+        if cardcount>=len(cards)/2:#8个卡要换行一下
             x_start =256
             cardcount=0
     outimg.save('DECK/'+playername+'/'+playername+mono+'_'+clan+'.jpg')
@@ -184,7 +191,7 @@ def main(jumptoindex):
                 print("要跳到",jumptoindex,"现在是",count)
                 continue
             name = i[0]
-            print(name)
+            print(str(count)+name)
             
             # getdeckpic( name,i[3],"_day1_w")
             # getdeckpic( name,i[5],"_day1_w")
@@ -197,7 +204,7 @@ def main(jumptoindex):
 
             getdeckpic( name,i[3],"_指定")
             getdeckpic( name,i[5],"_指定")
-
+        print("本次比赛共计48名选手有效提交卡组 16个轮空位，请大家把群名改成卡组公示的名字，以防对手查找不到。请在明天的 16.30准备好稳定网络,推荐使用电脑端。届时会有裁判在群内公布对阵，祝大家好运~")
 
 
 
