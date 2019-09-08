@@ -117,6 +117,7 @@ def darwTextOutline(draw,postion,text,font,size=1,color='black'):
     draw.text(postion,text,font = font)
 
 
+
 def getdeckpic(playername,code,mono):
     if os.path.exists("DECK/"+playername) == False:
         os.mkdir("DECK/"+playername)
@@ -139,7 +140,7 @@ def getdeckpic(playername,code,mono):
     playname_draw=ImageDraw.Draw(classimg)
     namefont = ImageFont.truetype(word_css, 35)
 
-    darwTextOutline(playname_draw,(10,10),playername+mono,namefont,2)
+    darwTextOutline(playname_draw,(10,10),playername,namefont,2)
 
 
     x1,y1=classimg.size
@@ -193,17 +194,17 @@ def main(jumptoindex):
             name = i[0]
             print(str(count)+name)
             
-            # getdeckpic( name,i[3],"_day1_w")
-            # getdeckpic( name,i[5],"_day1_w")
-            # getdeckpic( name,i[7],"_day1_z")
-            # getdeckpic( name,i[9],"_day1_z")
+            getdeckpic( name,i[2],"_day1_w")
+            getdeckpic( name,i[3],"_day1_w")
+            getdeckpic( name,i[4],"_day1_z")
+            getdeckpic( name,i[5],"_day1_z")
 
-            # getdeckpic( name,i[11],"_day2")
-            # getdeckpic( name,i[13],"_day2")
-            # getdeckpic( name,i[15],"_day2")
+            getdeckpic( name,i[6],"_day2")
+            getdeckpic( name,i[7],"_day2")
+            getdeckpic( name,i[8],"_day2")
 
-            getdeckpic( name,i[3],"_指定")
-            getdeckpic( name,i[5],"_指定")
+            # getdeckpic( name,i[3],"_指定")
+            # getdeckpic( name,i[5],"_指定")
         print("本次比赛共计48名选手有效提交卡组 16个轮空位，请大家把群名改成卡组公示的名字，以防对手查找不到。请在明天的 16.30准备好稳定网络,推荐使用电脑端。届时会有裁判在群内公布对阵，祝大家好运~")
 
 
