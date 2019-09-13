@@ -3,6 +3,7 @@
 
 import csv,time
 import json
+import qrcode
 import urllib
 from urllib import request
 from urllib import parse
@@ -83,7 +84,7 @@ def drawCard(cost, name, count, id):
     costfont = ImageFont.truetype(word_css, 20)
     darwTextOutline(costdraw,(7, 0), str(cost), font=costfont)
     #把cost放到卡上
-    cardimg.paste(costbg, (9, 9, 39, 39))
+    cardimg.paste(costbg, (9, 9, 39, 39),mask=costbg)
 
     darwTextOutline(cardDraw,(45,10),name,ImageFont.truetype(word_css, 18),2)
     darwTextOutline(cardDraw,(230, 9),'x' + str(count),costfont,2)
@@ -118,12 +119,14 @@ def darwTextOutline(draw,postion,text,font,size=1,color='black'):
 
 
 
-def getdeckpic(playername,code,mono):
+def getdeckpic(playername,code,deck_format,mono):
     if os.path.exists("DECK/"+playername) == False:
         os.mkdir("DECK/"+playername)
     print(code)
     time.sleep(2)#不能太快
-    outimg = Image.open('bg.jpg')
+    bgimg = Image.open('bg.jpg')
+    outimg=Image.new('RGBA',(512,800))
+
     draw = ImageDraw.Draw(outimg)
     #得到json
     cardsjson = getCards(code) 
@@ -131,19 +134,29 @@ def getdeckpic(playername,code,mono):
     cards= toCardArray(cardsjson)
     
     clan=str(cardsjson['data']['clan'])
+    
 
     # 画出职业 
-    #todo 指定/无限
+    
     classimg=Image.open('class/'+clan+'.jpg')
     classimg=classimg.resize((256*2, 60*2), Image.ANTIALIAS)
+  
+
+
+    #制出职业图的画板 
+    classimg_draw=ImageDraw.Draw(classimg)
+
+    #画出 指定/无限  无法从卡组数据中得到是指定还是无限
+    # deck_format=str(cardsjson['data']['deck_format'])
+    formatimg=Image.open('class/'+deck_format+'.png')
+    classimg.paste(formatimg,(10,20,38,48),mask=formatimg)
+
     #写出名字
-    playname_draw=ImageDraw.Draw(classimg)
     namefont = ImageFont.truetype(word_css, 35)
+    darwTextOutline(classimg_draw,(40,10),playername,namefont,2)
+   
 
-    darwTextOutline(playname_draw,(10,10),playername,namefont,2)
 
-
-    x1,y1=classimg.size
     #todo 画出费用图
     #费用图
     costmap=[0,0,0,0,0,0,0,0,0]
@@ -158,12 +171,11 @@ def getdeckpic(playername,code,mono):
             continue
         costmap[cost-1]+=count
     
-    darwTextOutline(playname_draw,(10,55),'费用:'+str([1,2,3,4,5,6,7,8,9])+'\n数量:'+str(costmap),font=ImageFont.truetype(word_css, 20))
-
-        
+    darwTextOutline(classimg_draw,(10,55),'费用:'+str([1,2,3,4,5,6,7,8,9])+'\n数量:'+str(costmap),font=ImageFont.truetype(word_css, 20))
+    #把职业图放到最终上
+    x1,y1=classimg.size
     outimg.paste(classimg,(0,0,x1,y1))
     #画出卡
-
     cardcount = 0
 
     x_start=0
@@ -176,10 +188,22 @@ def getdeckpic(playername,code,mono):
         #画到图上
         outimg.paste(im, (x_start, cardcount * 48+y_start, x+x_start, cardcount * 48 + y+y_start))
         cardcount += 1
-        if cardcount>=len(cards)/2:#8个卡要换行一下
+        if cardcount>=len(cards)/2:#换行一下
             x_start =256
             cardcount=0
-    outimg.save('DECK/'+playername+'/'+playername+mono+'_'+clan+'.jpg')
+    
+    #画出二维码
+
+    data = "https://wiki-sv.netease.com/picker?code="+code
+    qrimg = qrcode.make(data=data)
+    qrimg=qrimg.resize((200, 200), Image.ANTIALIAS)
+    #算出居中位
+    qrx=int(outimg.size[0]/2-qrimg.size[0]/2)
+    qry=int(round((len(cards)/2+0.1)+1)*45+y_start)
+
+    outimg.paste(qrimg,(qrx,qry,qrx+qrimg.size[0],qry+qrimg.size[1]))
+    #存出文件
+    outimg.save('DECK/'+playername+'/'+playername+'_'+deck_format+'_'+mono+'_'+clan+'.png')
 
 def main(jumptoindex):
     with open("2.csv", "r") as cfile:
@@ -194,17 +218,17 @@ def main(jumptoindex):
             name = i[0]
             print(str(count)+name)
             
-            getdeckpic( name,i[2],"_day1_w")
-            getdeckpic( name,i[3],"_day1_w")
-            getdeckpic( name,i[4],"_day1_z")
-            getdeckpic( name,i[5],"_day1_z")
+            # getdeckpic( name,i[2],"_day1_w")
+            # getdeckpic( name,i[3],"_day1_w")
+            # getdeckpic( name,i[4],"_day1_z")
+            # getdeckpic( name,i[5],"_day1_z")
 
-            getdeckpic( name,i[6],"_day2")
-            getdeckpic( name,i[7],"_day2")
-            getdeckpic( name,i[8],"_day2")
+            # getdeckpic( name,i[6],"_day2")
+            # getdeckpic( name,i[7],"_day2")
+            # getdeckpic( name,i[8],"_day2")
 
-            # getdeckpic( name,i[3],"_指定")
-            # getdeckpic( name,i[5],"_指定")
+            getdeckpic( name,i[2],"无限",'')
+            getdeckpic( name,i[3],"无限",'')
         print("本次比赛共计48名选手有效提交卡组 16个轮空位，请大家把群名改成卡组公示的名字，以防对手查找不到。请在明天的 16.30准备好稳定网络,推荐使用电脑端。届时会有裁判在群内公布对阵，祝大家好运~")
 
 
