@@ -2,6 +2,7 @@
 #!/usr/bin/python3
 
 from PIL import Image, ImageDraw, ImageFont
+import matplotlib.pyplot as plt
 import csv
 import time
 import json
@@ -172,6 +173,10 @@ def getdeckpic(playername, code, deck_format, mono):
             continue
         costmap[cost-1] += count
 
+    plt.bar(range(len(costmap)), costmap,fc='g')
+    #todo 画出柱图
+    plt.savefig('1.png',transparent=True,format="png")
+
     darwTextOutline(classimg_draw, (10, 55), '费用:'+str(
         [1, 2, 3, 4, 5, 6, 7, 8, 9])+'\n数量:'+str(costmap), font=ImageFont.truetype(word_css, 20))
     # 把职业图放到最终上
@@ -223,19 +228,19 @@ def main(jumptoindex):
             name = i[0]
             print(str(count)+name)
 
-            # getdeckpic( name,i[2],"_day1_w")
-            # getdeckpic( name,i[3],"_day1_w")
-            # getdeckpic( name,i[4],"_day1_z")
-            # getdeckpic( name,i[5],"_day1_z")
+            getdeckpic( name,i[2],"指定","")
+            getdeckpic( name,i[3],"指定","")
+
 
             # getdeckpic( name,i[6],"_day2")
             # getdeckpic( name,i[7],"_day2")
             # getdeckpic( name,i[8],"_day2")
 
-            getdeckpic(name, i[2], "无限", '')
-            getdeckpic(name, i[3], "无限", '')
+            # getdeckpic(name, i[2], "指定", '')
+            # getdeckpic(name, i[3], "指定", '')
         print("本次比赛共计48名选手有效提交卡组 16个轮空位，请大家把群名改成卡组公示的名字，以防对手查找不到。请在明天的 16.30准备好稳定网络,推荐使用电脑端。届时会有裁判在群内公布对阵，祝大家好运~")
 
 
 main(0)
+# getdeckpic("ogisosetsuna","AADEPu-rbRW4uD4IJ_1J1WEqVTh7JvVGG2B7KWrWdpAOAX4","指定","")
 # getdeckpic('sss',"AADEjNwjvVbupTQ1GOk69d-YU8Ea5WDVfJnXALyH0YMr5JULkY2G5eJdrtoy2RZ3-FeJ","")
